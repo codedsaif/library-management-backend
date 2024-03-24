@@ -1,15 +1,21 @@
 import User from "./../models/User.js";
+import Book from "./../models/Book.js";
 import AppError from "../utils/appError.js";
 import { signToken } from "../controllers/authController.js";
+import { restrictTo } from "../middleware/auth.js";
 
 export const resolver = {
   // testing function
   hello() {
-    return "Hello World!";
+    return { message: "Hi Mukesh", count: "500" };
+  },
+
+  withHello() {
+    return { message: "Hello With Hello" };
   },
 
   // registering user
-  signup: async function (args, res, next) {
+  signup: async function (args, req, res, next) {
     const { name, email, password, passwordConfirm } = args.userData;
 
     if (!name || !email || !password || !passwordConfirm) {
@@ -39,7 +45,7 @@ export const resolver = {
   },
 
   // signin user
-  signin: async function ({ email, password }, res) {
+  signin: async function ({ email, password }, req, res, next) {
     // 1) Checking if email and password exist
     if (!email || !password) {
       throw new AppError("Please provide email and password!", 400);
@@ -57,12 +63,41 @@ export const resolver = {
 
     return { user: { ...user._doc, _id: user._id.toString() }, token };
   },
-  addBook: function (req, res) {
-    console.log("Book Data", req.body);
-    return res.status(201).json({ status: "success" });
+
+  // addling new book
+  addBook: async function (args, req, res, next) {
+    // allow only for admin
+    restrictTo(["admin"], req?.user);
+    const { _id: createdBy } = req?.user;
+    const { title, description, author } = args.bookData;
+    if (!title) {
+      throw new AppError("Please provide book title", 400);
+    }
+    const bookAlreadyExists = await Book.findOne({ title });
+
+    if (bookAlreadyExists) {
+      throw new AppError("Book already exist", 409);
+    }
+
+    // crating new book
+    const newBook = await Book.create({
+      title,
+      description,
+      author,
+      createdBy,
+    });
+
+    return {
+      ...newBook._doc,
+      _id: newBook._id.toString(),
+      createdAt: newBook.createdAt.toISOString(),
+      updatedAt: newBook.updatedAt.toISOString(),
+    };
   },
-  books: function (req, res) {
-    return res.status(200).json({ status: "success", books: [] });
+  // getAll books
+  books: async function (req, res) {
+    const books = await Book.find();
+    return books;
   },
   book: function (req, res) {
     return res.status(200).json({ status: "success", book: {} });

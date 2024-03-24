@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+// allow to use all env file variables
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
@@ -6,12 +7,12 @@ import cors from "cors";
 import morgan from "morgan";
 import { graphqlHTTP } from "express-graphql";
 
-// allow to use all env file variables
 // custom functions import
 import { connectDB } from "./db/connect.js";
 import AppError from "./utils/appError.js";
 import { schema } from "./graphql/schema.js";
 import { resolver } from "./graphql/resolver.js";
+import { protect } from "./middleware/auth.js";
 
 const port = process.env.PORT || 8080;
 
@@ -24,6 +25,9 @@ if (process.env.NODE_ENV === "DEV") {
   console.log("App is using morgan");
   app.use(morgan("dev"));
 }
+
+// auth middleware
+app.use(protect);
 
 app.use(
   "/graphql",

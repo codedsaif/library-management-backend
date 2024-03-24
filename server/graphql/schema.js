@@ -19,6 +19,7 @@ export const schema = buildSchema(`
         description: String!
         author: String!
         currentOwner: User
+        createdBy: String!
         requests: [BookRequest!]!
         createdAt: String!
         updatedAt: String!
@@ -41,8 +42,9 @@ export const schema = buildSchema(`
 
     input BookData {
         title: String!
-        description: String!
-        author: String!
+        description: String
+        author: String
+        createdBy: String
     }
 
     type BookRequest {
@@ -51,16 +53,29 @@ export const schema = buildSchema(`
         requestDate: String!
         approved: Boolean!
     }
+
+    type HelloWorld {
+        message: String!
+        count: String
+        helloWithHello: HelloWithHello!
+    }
+    
+    type HelloWithHello {
+        message: String!
+    }
         
     type RootQuery {
-        hello:String!
+        hello: HelloWorld!
         users: [User]!
         signin(email:String!, password:String!):AuthData!
+        books: [Book]!
     }
+    
     type RootMutation {
         signup(userData: UserData): AuthData!
-
+        addBook(bookData: BookData): Book!
     }
+
     schema{
         query:RootQuery
         mutation:RootMutation
