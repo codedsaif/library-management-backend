@@ -30,8 +30,9 @@ app.use(
   graphqlHTTP({
     schema,
     rootValue: resolver,
+    // it's give query edit on post http://localhost:${post}/graphql
     graphiql: true,
-    formatError(err) {
+    customFormatErrorFn: (err) => {
       if (!err.originalError) return err;
       const data = err.originalError.data;
       const message = err.message || "An error occurred.";
