@@ -13,17 +13,6 @@ export const schema = buildSchema(`
         createdAt: String!
         updatedAt: String!
     }
-    type Book {
-        _id: ID!
-        title: String!
-        description: String!
-        author: String!
-        currentOwner: User
-        createdBy: String!
-        requests: [BookRequest!]!
-        createdAt: String!
-        updatedAt: String!
-    }
 
     input UserData {
         name: String!
@@ -40,11 +29,28 @@ export const schema = buildSchema(`
         token: String!
     }
 
+    type Book {
+        _id: ID!
+        title: String!
+        description: String!
+        author: String!
+        currentOwner: User
+        createdBy: String!
+        requests: [BookRequest!]!
+        createdAt: String!
+        updatedAt: String!
+    }
+
     input BookData {
         title: String!
         description: String
         author: String
         createdBy: String
+    }
+
+    type deleteMessage {
+        status:String!,
+        message:String
     }
 
     type BookRequest {
@@ -69,6 +75,7 @@ export const schema = buildSchema(`
         users: [User]!
         signin(email:String!, password:String!):AuthData!
         books: [Book]!
+        removeBook(id:String!):deleteMessage!
     }
     
     type RootMutation {

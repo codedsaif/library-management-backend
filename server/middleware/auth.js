@@ -44,11 +44,10 @@ export const protect = async (req, res, next) => {
 };
 
 export const restrictTo = (roles, user) => {
-  if (!roles.includes(user.role)) {
-    throw new AppError(
-      "You do not have permission to perform this action",
-      403
-    );
+  if (!user?.role) {
+    throw new AppError("Please login first", 401);
+  }
+  if (!roles.includes(user?.role)) {
   }
   return true;
 };

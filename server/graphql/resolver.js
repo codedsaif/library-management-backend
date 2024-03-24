@@ -106,9 +106,19 @@ export const resolver = {
     console.log("Book ID", req.body.id);
     return res.status(200).json({ status: "success" });
   },
-  deleteBook: function (req, res) {
-    console.log("Book ID", req.body.id);
-    return res.status(204).json({ status: "success" });
+  removeBook: async function (args, req, res, next) {
+    // restricted to admin only
+    restrictTo(["admin"], req?.user);
+    // destructuring id from args
+    const { id } = args;
+    if (!id) {
+      throw new AppError("Please provide book id", 400);
+    }
+    const book = await Book.findByIdAndDelete(id);
+    if (!book) {
+      throw new AppError("Book not found", 404);
+    }
+    return { status: "success", message: "book deleted successfully" };
   },
   users: function (req, res) {
     console.log("Users");
