@@ -87,6 +87,7 @@ export const schema = buildSchema(`
         removeUser(id:String!):deleteMessage! # this function will removed the user from application
         users: [User]! # this query will return all users
         borrowBook(id:String!): BorrowBook!
+        transferBook(id:String!):BorrowBook!
     }
     
     type RootMutation {

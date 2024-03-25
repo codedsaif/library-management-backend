@@ -248,6 +248,44 @@ export const resolver = {
     };
   },
 
+  // transfer borrow
+  transferBook: async function ({ id }, req, res, next) {
+    // just doing for login purpose
+    restrictTo([], req?.user);
+
+    if (!id) {
+      throw new AppError("Please provide book id", 400);
+    }
+    const book = await Book.findById(id);
+    // if book not found
+    if (!book) {
+      throw new AppError("Book not found", 404);
+    }
+    // when no current owner, assign direct to user
+    if (
+      book.currentOwner.toString() !== req.user?._id.toString() &&
+      restrictTo(["admin"], req?.user)
+    ) {
+      throw new AppError("You are not owner of the book", 422);
+    }
+
+    // if no user available in pending queue
+    if (book.pendingBorrowRequests?.length > 0) {
+      book.currentOwner = book.pendingBorrowRequests[0];
+      book.pendingBorrowRequests.shift();
+      // is user not available in queue
+    } else {
+      book.currentOwner = null;
+    }
+
+    await book.save();
+
+    return {
+      message: `Ownership transferred successfully`,
+      book: { ...book._doc, _id: book._id.toString() },
+    };
+  },
+
   // can see all users
   users: async function (_, req, res) {
     if (!restrictTo(["admin"], req?.user)) {
