@@ -41,13 +41,7 @@ app.use(
       const data = err.originalError.data;
       const message = err.message || "An error occurred.";
       const code = err.originalError.statusCode || 500;
-      // console.log(
-      //   "ERROR IN SERVER_GRAPHQL_CUSTOM",
-      //   err.message,
-      //   err.originalError.statusCode
-      // );
-
-      return { status: code, message, data };
+      return { statusCode: code, status: code, message, data };
     },
   })
 );

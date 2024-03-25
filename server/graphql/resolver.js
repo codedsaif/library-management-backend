@@ -9,7 +9,7 @@ export const resolver = {
   hello() {
     return { message: "Hi Mukesh", count: "500" };
   },
-
+  // testing function
   withHello() {
     return { message: "Hello With Hello" };
   },
@@ -149,14 +149,17 @@ export const resolver = {
       updatedAt: newBook.updatedAt.toISOString(),
     };
   },
+
   // getAll books
   books: async function (req, res) {
     const books = await Book.find();
     return books;
   },
+
   book: function (req, res) {
     return res.status(200).json({ status: "success", book: {} });
   },
+  // update book
   updateBook: function (req, res) {
     console.log("Book ID", req.body.id);
     return res.status(200).json({ status: "success" });
