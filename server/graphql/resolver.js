@@ -151,18 +151,42 @@ export const resolver = {
   },
 
   // getAll books
-  books: async function (req, res) {
-    const books = await Book.find();
+  books: async function ({ title }, req, res, next) {
+    let searchBasedUpon = {};
+    if (title) {
+      searchBasedUpon.title = { $regex: title, $options: "i" };
+    }
+    const books = await Book.find(searchBasedUpon);
     return books;
   },
 
   book: function (req, res) {
     return res.status(200).json({ status: "success", book: {} });
   },
+
   // update book
-  updateBook: function (req, res) {
-    console.log("Book ID", req.body.id);
-    return res.status(200).json({ status: "success" });
+  updateBook: async function (args, req, res, next) {
+    // only restricted roles can update book
+    if (!restrictTo(["admin"], req?.user)) {
+      throw new AppError("You don't have permission to update book.", 401);
+    }
+
+    // destructuring id from args
+    const { id, bookData } = args;
+    if (!id) {
+      throw new AppError("Please provide book id", 400);
+    }
+
+    const book = await Book.findByIdAndUpdate(id, bookData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!book) {
+      throw new AppError("Book not found", 404);
+    }
+
+    return { ...book._doc, _id: book._id.toString() };
   },
 
   // delete book this can restricted to only admin

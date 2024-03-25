@@ -1,6 +1,8 @@
 import { buildSchema } from "graphql";
 
 export const schema = buildSchema(`
+
+    # user schema
     type User {
         _id: ID!
         name: String!
@@ -40,11 +42,11 @@ export const schema = buildSchema(`
     type Book {
         _id: ID!
         title: String!
-        description: String!
-        author: String!
+        description: String
+        author: String
         currentOwner: User
         createdBy: String!
-        requests: [BookRequest!]!
+        requests: [BookRequest!]
         createdAt: String!
         updatedAt: String!
     }
@@ -81,7 +83,7 @@ export const schema = buildSchema(`
     type RootQuery {
         hello: HelloWorld! # this is just testing function
 
-        books: [Book]! # this function returns all books
+        books(title:String): [Book]! # this function returns all books
         removeBook(id:String!):deleteMessage! # this function delete the book
         
         signin(email:String!, password:String!):AuthData! # this is login(signin in function)
@@ -91,8 +93,9 @@ export const schema = buildSchema(`
     
     type RootMutation {
         signup(userData: UserData): AuthData!
-        addBook(bookData: BookData): Book!
         updateUser(id: String!, updateUserData: UpdateUserData!): User!
+        addBook(bookData: BookData): Book!
+        updateBook(id:String!, bookData: BookData!): Book!
     }
     
     schema{
