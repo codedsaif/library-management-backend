@@ -48,6 +48,9 @@ export const restrictTo = (roles, user) => {
     throw new AppError("Please login first", 401);
   }
   if (!roles.includes(user?.role)) {
+    console.log("condition matched", user?.role);
+    return false;
   }
+  console.log("condition matched but not follow");
   return true;
 };

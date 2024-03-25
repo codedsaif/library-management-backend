@@ -7,7 +7,7 @@ const sendErrorDevelopment = (err, req, res) => {
       stack: err.stack,
     });
   }
-  console.log("ERROR", err);
+  console.log("ERROR_IN_ERROR_CONTROLLER");
   return res
     .status(err.statusCode)
     .json({ title: "Something went wrong!", message: err.message });

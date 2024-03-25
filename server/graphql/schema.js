@@ -24,6 +24,14 @@ export const schema = buildSchema(`
         passwordConfirm:String!
     }
 
+    input UpdateUserData{
+        name:String
+        email:String
+        username:String
+        pic:String
+        role:String
+    }
+
     type AuthData {
         user: User!
         token: String!
@@ -71,18 +79,22 @@ export const schema = buildSchema(`
     }
         
     type RootQuery {
-        hello: HelloWorld!
-        users: [User]!
-        signin(email:String!, password:String!):AuthData!
-        books: [Book]!
-        removeBook(id:String!):deleteMessage!
+        hello: HelloWorld! # this is just testing function
+
+        books: [Book]! # this function returns all books
+        removeBook(id:String!):deleteMessage! # this function delete the book
+        
+        signin(email:String!, password:String!):AuthData! # this is login(signin in function)
+        removeUser(id:String!):deleteMessage! # this function will removed the user from application
+        users: [User]! # this query will return all users
     }
     
     type RootMutation {
         signup(userData: UserData): AuthData!
         addBook(bookData: BookData): Book!
+        updateUser(id: String!, updateUserData: UpdateUserData!): User!
     }
-
+    
     schema{
         query:RootQuery
         mutation:RootMutation

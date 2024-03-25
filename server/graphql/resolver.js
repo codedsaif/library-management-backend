@@ -64,10 +64,65 @@ export const resolver = {
     return { user: { ...user._doc, _id: user._id.toString() }, token };
   },
 
+  // update user
+  updateUser: async function (args, req, res, next) {
+    let {
+      id,
+      updateUserData: { name, email, username, pic, role },
+    } = args;
+    // user itself don't have ability to update role
+    if (req?.user?.role !== "admin") {
+      role = undefined;
+    }
+
+    if (req?.user._id.toString() !== id && !restrictTo(["admin"], req?.user)) {
+      throw new AppError(
+        "You don't have permission to update other user expected user self",
+        401
+      );
+    }
+    const updateObject = {};
+    if (name) updateObject.name = name;
+    if (email) updateObject.email = email;
+    if (username) updateObject.username = username;
+    if (pic) updateObject.pic = pic;
+    if (role) updateObject.role = role;
+
+    const user = await User.findByIdAndUpdate(id, updateObject, {
+      new: true,
+      runValidators: true,
+    });
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    return { ...user._doc, _id: user._id.toString() };
+  },
+
+  // admin or user self can remove himself
+  removeUser: async function (args, req, res, next) {
+    // destructuring id from args
+    const { id } = args;
+    if (!id) {
+      throw new AppError("Please provide book unique id", 400);
+    }
+    // restricted to self & admin only
+    if (req?.user._id.toString() !== id && !restrictTo(["admin"], req?.user)) {
+      throw new AppError("You don't have permission to see all users", 401);
+    }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    return { status: "success", message: "User removed successfully" };
+  },
+
   // addling new book
   addBook: async function (args, req, res, next) {
     // allow only for admin
-    restrictTo(["admin"], req?.user);
+    if (!restrictTo(["admin"], req?.user)) {
+      throw new AppError("You don't have permission to add new book", 401);
+    }
     const { _id: createdBy } = req?.user;
     const { title, description, author } = args.bookData;
     if (!title) {
@@ -106,9 +161,13 @@ export const resolver = {
     console.log("Book ID", req.body.id);
     return res.status(200).json({ status: "success" });
   },
+
+  // delete book this can restricted to only admin
   removeBook: async function (args, req, res, next) {
     // restricted to admin only
-    restrictTo(["admin"], req?.user);
+    if (!restrictTo(["admin"], req?.user)) {
+      throw new AppError("You don't have permission to remove book.", 401);
+    }
     // destructuring id from args
     const { id } = args;
     if (!id) {
@@ -120,8 +179,13 @@ export const resolver = {
     }
     return { status: "success", message: "book deleted successfully" };
   },
-  users: function (req, res) {
-    console.log("Users");
-    return res.status(200).json({ status: "success", users: [] });
+
+  // can see all users
+  users: async function (_, req, res) {
+    if (!restrictTo(["admin"], req?.user)) {
+      throw new AppError("You don't have permission to see all users", 401);
+    }
+    const books = await User.find();
+    return books;
   },
 };
