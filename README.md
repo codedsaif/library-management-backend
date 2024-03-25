@@ -49,3 +49,10 @@
 
 1. Admin Insights: Administrators can access comprehensive data including all users, their borrowed books, and pending book borrowing requests.
 2. User Insights: Users can view detailed information about books, including the current owner, creator, and pending book borrowing requests.
+
+```
+About me
+- Name: Saif
+- Email: saifali27906@gmail.com
+- Phone: +916397727906
+```
