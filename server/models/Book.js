@@ -41,5 +41,12 @@ const bookSchema = new mongoose.Schema(
   }
 );
 
+bookSchema.pre(/^find/, function (next) {
+  this.populate("pendingBorrowRequests")
+    .populate("currentOwner")
+    .populate("createdBy");
+  next();
+});
+
 const Book = mongoose.model("Book", bookSchema);
 export default Book;

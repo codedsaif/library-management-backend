@@ -77,6 +77,34 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ username: 1 });
 
+userSchema.virtual("books", {
+  ref: "Book",
+  localField: "_id",
+  foreignField: "currentOwner",
+  justOne: false,
+});
+
+userSchema.virtual("pendingBorrowRequests", {
+  ref: "Book",
+  localField: "pendingBorrowRequests",
+  foreignField: "_id",
+  justOne: false,
+});
+
+userSchema.virtual("currentOwner", {
+  ref: "Book",
+  localField: "_id",
+  foreignField: "currentOwner",
+  justOne: true,
+});
+
+userSchema.virtual("createdBy", {
+  ref: "Book",
+  localField: "_id",
+  foreignField: "createdBy",
+  justOne: true,
+});
+
 userSchema.pre("save", async function (next) {
   // Only run this function if password was actually modified
   if (!this.isModified("password")) return next();

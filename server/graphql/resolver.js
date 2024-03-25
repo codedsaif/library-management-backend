@@ -7,11 +7,7 @@ import { restrictTo } from "../middleware/auth.js";
 export const resolver = {
   // testing function
   hello() {
-    return { message: "Hi Mukesh", count: "500" };
-  },
-  // testing function
-  withHello() {
-    return { message: "Hello With Hello" };
+    return { message: "Hi Saif", count: "35000" };
   },
 
   // registering user
@@ -52,7 +48,9 @@ export const resolver = {
     }
 
     // 2) Checking if user exists && password is correct
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email })
+      .select("+password")
+      .populate("books");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
       throw new AppError("Incorrect email or password", 401);
@@ -60,8 +58,14 @@ export const resolver = {
 
     // creating token
     const token = signToken(user._id);
-
-    return { user: { ...user._doc, _id: user._id.toString() }, token };
+    return {
+      user: {
+        ...user._doc,
+        _id: user._id.toString(),
+        books: user?.books,
+      },
+      token,
+    };
   },
 
   // update user
@@ -91,11 +95,12 @@ export const resolver = {
     const user = await User.findByIdAndUpdate(id, updateObject, {
       new: true,
       runValidators: true,
-    });
+    }).populate("books");
+    console.log("User", user);
     if (!user) {
       throw new AppError("User not found", 404);
     }
-    return { ...user._doc, _id: user._id.toString() };
+    return { ...user._doc, _id: user._id.toString(), books: user?.books };
   },
 
   // admin or user self can remove himself
@@ -145,6 +150,7 @@ export const resolver = {
     return {
       ...newBook._doc,
       _id: newBook._id.toString(),
+      createdBy: req?.user,
       createdAt: newBook.createdAt.toISOString(),
       updatedAt: newBook.updatedAt.toISOString(),
     };
@@ -156,12 +162,12 @@ export const resolver = {
     if (title) {
       searchBasedUpon.title = { $regex: title, $options: "i" };
     }
-    const books = await Book.find(searchBasedUpon).populate("createdBy", "_id");
+    const books = await Book.find(searchBasedUpon).populate([
+      "createdBy",
+      "currentOwner",
+      "pendingBorrowRequests",
+    ]);
     return books;
-  },
-
-  book: function (req, res) {
-    return res.status(200).json({ status: "success", book: {} });
   },
 
   // update book
@@ -215,7 +221,11 @@ export const resolver = {
     if (!id) {
       throw new AppError("Please provide book id", 400);
     }
-    const book = await Book.findById(id);
+    const book = await Book.findById(id).populate([
+      "createdBy",
+      "currentOwner",
+      "pendingBorrowRequests",
+    ]);
     // if book not found
     if (!book) {
       throw new AppError("Book not found", 404);
@@ -228,12 +238,17 @@ export const resolver = {
         message: `Now it's your book ${req.user?.name}`,
         book: { ...book._doc, _id: book._id.toString() },
       };
-    } else if (book.currentOwner.toString() === req.user?._id.toString()) {
+    } else if (book.currentOwner?._id.toString() === req.user?._id.toString()) {
       throw new AppError("You are already owner of the book", 208);
     }
 
     // when already made request
-    if (book.pendingBorrowRequests.includes(req.user?._id)) {
+    const userId = req.user?._id.toString();
+    const userInPendingRequests = book.pendingBorrowRequests.find(
+      (request) => request._id.toString() === userId
+    );
+    if (userInPendingRequests) {
+      // if (book.pendingBorrowRequests.includes(req.user?._id.toString())) {
       throw new AppError("You already made a request. Please wait...", 207);
     }
 
@@ -244,7 +259,16 @@ export const resolver = {
 
     return {
       message: `Request made Successfully ${req.user?.name}. Please wait...`,
-      book: { ...book._doc, _id: book._id.toString() },
+      book: {
+        ...book._doc,
+        _id: book._id.toString(),
+        createdBy: book?.createdBy,
+        currentOwner: book?.currentOwner,
+        pendingBorrowRequests: book?.pendingBorrowRequests.slice(
+          0,
+          book?.pendingBorrowRequests.length - 1
+        ),
+      },
     };
   },
 
@@ -256,22 +280,26 @@ export const resolver = {
     if (!id) {
       throw new AppError("Please provide book id", 400);
     }
-    const book = await Book.findById(id);
+    const book = await Book.findById(id).populate([
+      "createdBy",
+      "currentOwner",
+      "pendingBorrowRequests",
+    ]);
     // if book not found
     if (!book) {
       throw new AppError("Book not found", 404);
     }
     // when no current owner, assign direct to user
     if (
-      book.currentOwner.toString() !== req.user?._id.toString() &&
-      restrictTo(["admin"], req?.user)
+      book.currentOwner?._id.toString() !== req.user?._id.toString() &&
+      !restrictTo(["admin"], req?.user)
     ) {
       throw new AppError("You are not owner of the book", 422);
     }
 
     // if no user available in pending queue
     if (book.pendingBorrowRequests?.length > 0) {
-      book.currentOwner = book.pendingBorrowRequests[0];
+      book.currentOwner = book.pendingBorrowRequests[0]?._id;
       book.pendingBorrowRequests.shift();
       // is user not available in queue
     } else {
@@ -280,9 +308,22 @@ export const resolver = {
 
     await book.save();
 
+    // return {
+    //   message: `Ownership transferred successfully`,
+    //   book: { ...book._doc, _id: book._id.toString() },
+    // };
     return {
-      message: `Ownership transferred successfully`,
-      book: { ...book._doc, _id: book._id.toString() },
+      message: `Request made Successfully ${req.user?.name}. Please wait...`,
+      book: {
+        ...book._doc,
+        _id: book._id.toString(),
+        createdBy: book?.createdBy,
+        currentOwner: book?.currentOwner,
+        pendingBorrowRequests: book?.pendingBorrowRequests.slice(
+          0,
+          book?.pendingBorrowRequests.length - 1
+        ),
+      },
     };
   },
 
@@ -291,7 +332,7 @@ export const resolver = {
     if (!restrictTo(["admin"], req?.user)) {
       throw new AppError("You don't have permission to see all users", 401);
     }
-    const books = await User.find();
+    const books = await User.find().populate("books");
     return books;
   },
 };

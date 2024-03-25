@@ -10,9 +10,29 @@ export const schema = buildSchema(`
         username: String
         pic: String
         role: String
-        books:[Book!]!
+        books:[SecondLevelBooks]
         createdAt: String!
         updatedAt: String!
+    }
+
+    type SecondLevelBooks{
+        _id: ID!
+        title: String!
+        description: String
+        author: String
+        currentOwner: SecondLevelUser
+        createdBy: SecondLevelUser
+        pendingBorrowRequests:[SecondLevelUser]
+        createdAt: String!
+        updatedAt: String!
+    }
+
+    type SecondLevelUser {
+        _id: ID!
+        name: String!
+        username: String
+        pic: String
+        role: String
     }
 
     input UserData {
@@ -43,9 +63,9 @@ export const schema = buildSchema(`
         title: String!
         description: String
         author: String
-        currentOwner: User
-        createdBy: User
-        pendingBorrowRequests:[ID!]
+        currentOwner: SecondLevelUser
+        createdBy: SecondLevelUser
+        pendingBorrowRequests:[SecondLevelUser]
         createdAt: String!
         updatedAt: String!
     }
@@ -62,7 +82,7 @@ export const schema = buildSchema(`
         book: Book
     }
 
-    type deleteMessage {
+    type removeMessage {
         status:String!,
         message:String
     }
@@ -70,21 +90,16 @@ export const schema = buildSchema(`
     type HelloWorld {
         message: String!
         count: String
-        helloWithHello: HelloWithHello!
-    }
-    
-    type HelloWithHello {
-        message: String!
     }
         
     type RootQuery {
         hello: HelloWorld! # this is just testing function
 
         books(title:String): [Book]! # this function returns all books
-        removeBook(id:String!):deleteMessage! # this function delete the book
+        removeBook(id:String!):removeMessage! # this function delete the book
         
         signin(email:String!, password:String!):AuthData! # this is login(signin in function)
-        removeUser(id:String!):deleteMessage! # this function will removed the user from application
+        removeUser(id:String!):removeMessage! # this function will removed the user from application
         users: [User]! # this query will return all users
         borrowBook(id:String!): BorrowBook!
         transferBook(id:String!):BorrowBook!
