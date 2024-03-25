@@ -14,6 +14,8 @@ import { schema } from "./graphql/schema.js";
 import { resolver } from "./graphql/resolver.js";
 import { protect } from "./middleware/auth.js";
 
+import globalErrorHandler from "./controllers/errorController.js";
+
 const port = process.env.PORT || 8080;
 
 const app = express();
@@ -41,15 +43,20 @@ app.use(
       const data = err.originalError.data;
       const message = err.message || "An error occurred.";
       const code = err.originalError.statusCode || 500;
-      return { statusCode: code, status: code, message, data };
+      console.log("ERROR IN CUSTOM FORMAT ERROR FN IN SERVER.js");
+      return { statusCode: code, message, data };
     },
   })
 );
 
 // it's handle all routes which not available in app
 app.all("*", (req, res, next) => {
+  console.log("REQUEST IN * ROUTE");
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+// it's handle all errors
+app.use(globalErrorHandler);
 
 const server = async () => {
   try {

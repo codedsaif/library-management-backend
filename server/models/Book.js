@@ -18,6 +18,12 @@ const bookSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    pendingBorrowRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     currentOwner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -30,6 +36,8 @@ const bookSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 

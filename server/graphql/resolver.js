@@ -156,7 +156,7 @@ export const resolver = {
     if (title) {
       searchBasedUpon.title = { $regex: title, $options: "i" };
     }
-    const books = await Book.find(searchBasedUpon);
+    const books = await Book.find(searchBasedUpon).populate("createdBy", "_id");
     return books;
   },
 
@@ -205,6 +205,47 @@ export const resolver = {
       throw new AppError("Book not found", 404);
     }
     return { status: "success", message: "book deleted successfully" };
+  },
+
+  // Request for book
+  borrowBook: async function ({ id }, req, res, next) {
+    // just doing for login purpose
+    restrictTo([], req?.user);
+
+    if (!id) {
+      throw new AppError("Please provide book id", 400);
+    }
+    const book = await Book.findById(id);
+    // if book not found
+    if (!book) {
+      throw new AppError("Book not found", 404);
+    }
+    // when no current owner, assign direct to user
+    if (!book.currentOwner) {
+      book.currentOwner = req.user?._id;
+      await book.save();
+      return {
+        message: `Now it's your book ${req.user?.name}`,
+        book: { ...book._doc, _id: book._id.toString() },
+      };
+    } else if (book.currentOwner.toString() === req.user?._id.toString()) {
+      throw new AppError("You are already owner of the book", 208);
+    }
+
+    // when already made request
+    if (book.pendingBorrowRequests.includes(req.user?._id)) {
+      throw new AppError("You already made a request. Please wait...", 207);
+    }
+
+    // add the user's ID to the pending borrow requests
+    book.pendingBorrowRequests.push(req.user?._id);
+
+    await book.save();
+
+    return {
+      message: `Request made Successfully ${req.user?.name}. Please wait...`,
+      book: { ...book._doc, _id: book._id.toString() },
+    };
   },
 
   // can see all users

@@ -10,7 +10,6 @@ export const schema = buildSchema(`
         username: String
         pic: String
         role: String
-        password: String
         books:[Book!]!
         createdAt: String!
         updatedAt: String!
@@ -45,8 +44,8 @@ export const schema = buildSchema(`
         description: String
         author: String
         currentOwner: User
-        createdBy: String!
-        requests: [BookRequest!]
+        createdBy: User
+        pendingBorrowRequests:[ID!]
         createdAt: String!
         updatedAt: String!
     }
@@ -58,16 +57,14 @@ export const schema = buildSchema(`
         createdBy: String
     }
 
+    type BorrowBook {
+        message: String!
+        book: Book
+    }
+
     type deleteMessage {
         status:String!,
         message:String
-    }
-
-    type BookRequest {
-        id: ID!
-        user: User!
-        requestDate: String!
-        approved: Boolean!
     }
 
     type HelloWorld {
@@ -89,6 +86,7 @@ export const schema = buildSchema(`
         signin(email:String!, password:String!):AuthData! # this is login(signin in function)
         removeUser(id:String!):deleteMessage! # this function will removed the user from application
         users: [User]! # this query will return all users
+        borrowBook(id:String!): BorrowBook!
     }
     
     type RootMutation {
@@ -102,4 +100,4 @@ export const schema = buildSchema(`
         query:RootQuery
         mutation:RootMutation
     }
-`);
+    `);
